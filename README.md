@@ -10,7 +10,7 @@
 
 **An intelligent multi-agent stock trading system powered by LangGraph and GPT-4**
 
-[Live Demo](https://your-app-name.streamlit.app) • [Report Bug](https://github.com/yourusername/stock-trading-agent/issues) • [Request Feature](https://github.com/yourusername/stock-trading-agent/issues)
+[🚀 Live Demo](https://stock-analysis-agent-6kbmtz47gc3rwjcyjff5vf.streamlit.app/) • [Report Bug](https://github.com/VedavrathP/Stock-Analysis-Agent/issues) • [Request Feature](https://github.com/VedavrathP/Stock-Analysis-Agent/issues)
 
 </div>
 
@@ -74,8 +74,8 @@ This project implements a **supervised multi-agent architecture** for stock trad
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/stock-trading-agent.git
-   cd stock-trading-agent
+   git clone https://github.com/VedavrathP/Stock-Analysis-Agent.git
+   cd Stock-Analysis-Agent
    ```
 
 2. **Install dependencies**
@@ -109,7 +109,7 @@ This project implements a **supervised multi-agent architecture** for stock trad
 2. **Go to [Streamlit Cloud](https://share.streamlit.io/)**
 
 3. **Deploy new app**:
-   - Repository: `yourusername/stock-trading-agent`
+   - Repository: `VedavrathP/Stock-Analysis-Agent`
    - Branch: `main`
    - Main file path: `code/app.py`
 
