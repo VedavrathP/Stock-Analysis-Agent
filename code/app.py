@@ -463,15 +463,38 @@ with tab1:
                 
                 recommendation = result['trade_recommendation']
                 
-                # Parse recommendation
-                if 'BUY' in recommendation.upper() and 'STRONG BUY' not in recommendation.upper():
-                    st.success("✅ **RECOMMENDATION: BUY**")
-                elif 'STRONG BUY' in recommendation.upper():
-                    st.success("🚀 **RECOMMENDATION: STRONG BUY**")
-                elif 'SELL' in recommendation.upper():
-                    st.error("⚠️ **RECOMMENDATION: SELL**")
+                # Parse recommendation - look for the actual recommendation pattern
+                # Check first 500 chars for the actual recommendation (not template text)
+                rec_header = recommendation[:500].upper()
+                
+                # Look for specific patterns that indicate the actual recommendation
+                import re
+                
+                # Pattern 1: "Overall Recommendation: X" or "Recommendation: X"
+                rec_match = re.search(r'(?:OVERALL\s+)?RECOMMENDATION[:\s]+(\w+(?:\s+\w+)?)', rec_header)
+                
+                if rec_match:
+                    actual_rec = rec_match.group(1).strip()
+                    if 'STRONG' in actual_rec and 'BUY' in actual_rec:
+                        st.success("🚀 **RECOMMENDATION: STRONG BUY**")
+                    elif 'BUY' in actual_rec and 'STRONG' not in actual_rec:
+                        st.success("✅ **RECOMMENDATION: BUY**")
+                    elif 'SELL' in actual_rec:
+                        st.error("⚠️ **RECOMMENDATION: SELL**")
+                    elif 'HOLD' in actual_rec or 'WAIT' in actual_rec:
+                        st.info("📌 **RECOMMENDATION: HOLD**")
+                    else:
+                        st.info(f"📌 **RECOMMENDATION: {actual_rec}**")
                 else:
-                    st.info("📌 **RECOMMENDATION: HOLD**")
+                    # Fallback: check if HOLD appears early (more likely to be the actual rec)
+                    if 'OVERALL RECOMMENDATION: HOLD' in rec_header or rec_header.startswith('HOLD'):
+                        st.info("📌 **RECOMMENDATION: HOLD**")
+                    elif 'OVERALL RECOMMENDATION: BUY' in rec_header:
+                        st.success("✅ **RECOMMENDATION: BUY**")
+                    elif 'OVERALL RECOMMENDATION: SELL' in rec_header:
+                        st.error("⚠️ **RECOMMENDATION: SELL**")
+                    else:
+                        st.info("📌 **RECOMMENDATION: See details below**")
                 
                 st.text(recommendation)
             else:
