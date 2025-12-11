@@ -1,4 +1,4 @@
-# 🤖 Stock Trading AI Agent
+# 🤖 Stock Analysis & Investing Agent
 
 <div align="center">
 
@@ -8,7 +8,7 @@
 ![Alpaca](https://img.shields.io/badge/Alpaca-Paper%20Trading-yellow.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 
-**An intelligent multi-agent stock trading system powered by LangGraph and GPT-4**
+**An intelligent multi-agent stock analysis and investing system powered by LangGraph and GPT-4**
 
 [🚀 Live Demo](https://stock-analysis-agent-6kbmtz47gc3rwjcyjff5vf.streamlit.app/) • [Report Bug](https://github.com/VedavrathP/Stock-Analysis-Agent/issues) • [Request Feature](https://github.com/VedavrathP/Stock-Analysis-Agent/issues)
 

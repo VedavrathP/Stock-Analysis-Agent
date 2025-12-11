@@ -26,7 +26,7 @@ from datetime import timedelta
 
 # Page config
 st.set_page_config(
-    page_title="Stock Trading AI Agent",
+    page_title="Stock Analysis & Investing Agent",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -137,7 +137,7 @@ if 'last_ticker' not in st.session_state:
     st.session_state.last_ticker = None
 
 # Title
-st.markdown('<h1 class="main-header">🤖 Stock Trading AI Agent</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">🤖 Stock Analysis & Investing Agent</h1>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Powered by Multi-Agent AI System • LangGraph • Alpaca Trading</p>', unsafe_allow_html=True)
 
 # Sidebar
