@@ -631,63 +631,104 @@ NEWS SENTIMENT:
 {news_sentiment}
 """
         
-        # Get LLM trade decision
-        trade_prompt = f"""As a professional trader, review all the analysis and make a final trade decision:
+        # Get LLM trade decision with JSON output for reliable parsing
+        trade_prompt = f"""As a professional trader, review all the analysis and make a final trade decision.
 
 {full_analysis}
 
-Based on ALL THREE analyses (fundamental, technical, and sentiment), provide:
+IMPORTANT: Be conservative. Only recommend BUY if there's strong alignment across ALL analyses.
 
-1. Overall recommendation: BUY, SELL, or HOLD
-2. Confidence level: 1-10 (10=highest confidence)
-3. Position size recommendation: Conservative(2%)/Moderate(5%)/Aggressive(10%)
-4. Risk assessment
-5. Entry price target
-6. Stop loss level (%)
-7. Take profit target (%)
-8. Time horizon (Short/Medium/Long term)
-9. Key reasoning for the decision
+You MUST respond with a valid JSON object in this exact format:
+{{
+    "recommendation": "BUY" or "SELL" or "HOLD",
+    "confidence": 1-10,
+    "position_size": "conservative" or "moderate" or "aggressive",
+    "entry_price": 0.00,
+    "stop_loss_percent": 5,
+    "take_profit_percent": 10,
+    "time_horizon": "short" or "medium" or "long",
+    "risk_assessment": "description of risks",
+    "reasoning": "key reasons for the decision"
+}}
 
-IMPORTANT: Be conservative. Only recommend BUY if there's strong alignment across analyses.
-Format your response clearly with the recommendation at the top."""
+Rules:
+- recommendation MUST be exactly one of: "BUY", "SELL", or "HOLD"
+- Only use "BUY" if confidence >= 7 AND all analyses align positively
+- Default to "HOLD" if analyses are mixed or uncertain
+- Return ONLY the JSON object, no other text"""
         
         response = llm.invoke([HumanMessage(content=trade_prompt)])
-        trade_decision = response.content
+        trade_decision_raw = response.content
         
-        # Parse recommendation - look for the ACTUAL recommendation, not mentions in reasoning
-        import re
+        # Parse JSON response
+        action = "HOLD"  # Safe default
+        confidence = 5
+        reasoning = ""
         
-        # Look for explicit recommendation patterns in the first part of the response
-        rec_header = trade_decision[:600].upper()
-        
-        # Pattern: "Overall Recommendation: X" or "Recommendation: X" or "1. Overall recommendation: X"
-        rec_match = re.search(r'(?:OVERALL\s+)?RECOMMENDATION[:\s]+(\w+(?:\s+\w+)?)', rec_header)
-        
-        action = "HOLD"  # Default to HOLD (safe)
-        
-        if rec_match:
-            actual_rec = rec_match.group(1).strip().upper()
-            print(f"📋 Parsed recommendation: {actual_rec}")
+        try:
+            # Clean the response - extract JSON if wrapped in markdown
+            json_str = trade_decision_raw.strip()
+            if "```json" in json_str:
+                json_str = json_str.split("```json")[1].split("```")[0].strip()
+            elif "```" in json_str:
+                json_str = json_str.split("```")[1].split("```")[0].strip()
             
-            if 'STRONG' in actual_rec and 'BUY' in actual_rec:
-                action = "STRONG_BUY"
-            elif actual_rec == 'BUY':
+            decision_json = json.loads(json_str)
+            
+            # Extract recommendation - MUST be exactly BUY, SELL, or HOLD
+            rec = decision_json.get("recommendation", "HOLD").upper().strip()
+            confidence = int(decision_json.get("confidence", 5))
+            reasoning = decision_json.get("reasoning", "")
+            
+            print(f"📋 JSON Parsed - Recommendation: {rec}, Confidence: {confidence}")
+            
+            # Only accept BUY if explicitly stated AND confidence is high enough
+            if rec == "BUY" and confidence >= 6:
                 action = "BUY"
-            elif 'SELL' in actual_rec:
+            elif rec == "SELL":
                 action = "SELL"
-            elif 'HOLD' in actual_rec or 'WAIT' in actual_rec:
+            else:
                 action = "HOLD"
-        else:
-            # Fallback: be very strict - only BUY if it starts with "BUY" recommendation
-            if rec_header.strip().startswith('BUY') or 'RECOMMENDATION: BUY' in rec_header:
-                action = "BUY"
-            elif rec_header.strip().startswith('STRONG BUY') or 'RECOMMENDATION: STRONG BUY' in rec_header:
-                action = "STRONG_BUY"
-            elif 'RECOMMENDATION: SELL' in rec_header:
-                action = "SELL"
-            # Otherwise stays HOLD (safe default)
+                
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            print(f"⚠️ JSON parsing failed: {e}")
+            print(f"Raw response: {trade_decision_raw[:200]}...")
+            action = "HOLD"  # Safe default on parse error
+            reasoning = "Analysis complete but recommendation parsing failed. Defaulting to HOLD for safety."
         
         print(f"💼 Final action determined: {action}")
+        
+        # Extract values safely for display
+        try:
+            risk_assessment = decision_json.get('risk_assessment', 'N/A')
+            entry_price = float(decision_json.get('entry_price', 0))
+            stop_loss = decision_json.get('stop_loss_percent', 5)
+            take_profit = decision_json.get('take_profit_percent', 10)
+            time_horizon = decision_json.get('time_horizon', 'medium').title()
+        except:
+            risk_assessment = 'N/A'
+            entry_price = 0.0
+            stop_loss = 5
+            take_profit = 10
+            time_horizon = 'Medium'
+        
+        # Format trade decision for display
+        trade_decision = f"""### Overall Recommendation: {action}
+
+1. **Confidence Level:** {confidence}/10
+
+2. **Risk Assessment:** {risk_assessment}
+
+3. **Entry Price Target:** ${entry_price:.2f}
+
+4. **Stop Loss:** {stop_loss}%
+
+5. **Take Profit:** {take_profit}%
+
+6. **Time Horizon:** {time_horizon} Term
+
+7. **Key Reasoning:** {reasoning}
+"""
         
         # Execute trade ONLY if recommendation is explicitly BUY (not just mentioned)
         trade_result = ""
