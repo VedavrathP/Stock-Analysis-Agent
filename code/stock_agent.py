@@ -654,19 +654,42 @@ Format your response clearly with the recommendation at the top."""
         response = llm.invoke([HumanMessage(content=trade_prompt)])
         trade_decision = response.content
         
-        # Parse recommendation
-        decision_lower = trade_decision.lower()
-        action = None
-        if "strong buy" in decision_lower:
-            action = "STRONG_BUY"
-        elif "buy" in decision_lower and "don't buy" not in decision_lower and "not buy" not in decision_lower:
-            action = "BUY"
-        elif "sell" in decision_lower:
-            action = "SELL"
-        else:
-            action = "HOLD"
+        # Parse recommendation - look for the ACTUAL recommendation, not mentions in reasoning
+        import re
         
-        # Execute trade if recommendation is BUY
+        # Look for explicit recommendation patterns in the first part of the response
+        rec_header = trade_decision[:600].upper()
+        
+        # Pattern: "Overall Recommendation: X" or "Recommendation: X" or "1. Overall recommendation: X"
+        rec_match = re.search(r'(?:OVERALL\s+)?RECOMMENDATION[:\s]+(\w+(?:\s+\w+)?)', rec_header)
+        
+        action = "HOLD"  # Default to HOLD (safe)
+        
+        if rec_match:
+            actual_rec = rec_match.group(1).strip().upper()
+            print(f"📋 Parsed recommendation: {actual_rec}")
+            
+            if 'STRONG' in actual_rec and 'BUY' in actual_rec:
+                action = "STRONG_BUY"
+            elif actual_rec == 'BUY':
+                action = "BUY"
+            elif 'SELL' in actual_rec:
+                action = "SELL"
+            elif 'HOLD' in actual_rec or 'WAIT' in actual_rec:
+                action = "HOLD"
+        else:
+            # Fallback: be very strict - only BUY if it starts with "BUY" recommendation
+            if rec_header.strip().startswith('BUY') or 'RECOMMENDATION: BUY' in rec_header:
+                action = "BUY"
+            elif rec_header.strip().startswith('STRONG BUY') or 'RECOMMENDATION: STRONG BUY' in rec_header:
+                action = "STRONG_BUY"
+            elif 'RECOMMENDATION: SELL' in rec_header:
+                action = "SELL"
+            # Otherwise stays HOLD (safe default)
+        
+        print(f"💼 Final action determined: {action}")
+        
+        # Execute trade ONLY if recommendation is explicitly BUY (not just mentioned)
         trade_result = ""
         if action in ["BUY", "STRONG_BUY"] and trading_client:
             try:
