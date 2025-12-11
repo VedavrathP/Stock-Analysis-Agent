@@ -11,8 +11,11 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Import from stock_agent.py
-from stock_agent import (
+# Add the current directory to path
+sys.path.insert(0, os.path.dirname(__file__))
+
+# Import from main2.py
+from main2 import (
     create_trading_workflow,
     trading_client,
     data_client,
@@ -32,98 +35,50 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS with modern design
+# Custom CSS
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
-    
     .main-header {
-        font-family: 'Outfit', sans-serif;
         font-size: 3rem;
-        font-weight: 700;
+        font-weight: bold;
         text-align: center;
-        background: linear-gradient(135deg, #00d4aa 0%, #00b4d8 50%, #7c3aed 100%);
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         padding: 1rem;
-        margin-bottom: 0.5rem;
     }
-    
-    .subtitle {
-        font-family: 'JetBrains Mono', monospace;
-        text-align: center;
-        color: #64748b;
-        font-size: 0.9rem;
-        margin-bottom: 2rem;
-    }
-    
     .metric-card {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        padding: 1.2rem;
-        border-radius: 1rem;
-        border: 1px solid #334155;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #667eea;
     }
-    
     .success-box {
         padding: 1rem;
-        border-radius: 0.75rem;
-        background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
-        border: 1px solid #10b981;
-        color: #a7f3d0;
-        font-family: 'JetBrains Mono', monospace;
+        border-radius: 0.5rem;
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
     }
-    
     .warning-box {
         padding: 1rem;
-        border-radius: 0.75rem;
-        background: linear-gradient(135deg, #78350f 0%, #713f12 100%);
-        border: 1px solid #f59e0b;
-        color: #fef3c7;
-        font-family: 'JetBrains Mono', monospace;
+        border-radius: 0.5rem;
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
     }
-    
     .error-box {
         padding: 1rem;
-        border-radius: 0.75rem;
-        background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
-        border: 1px solid #ef4444;
-        color: #fecaca;
-        font-family: 'JetBrains Mono', monospace;
+        border-radius: 0.5rem;
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
     }
-    
     .stButton>button {
         width: 100%;
-        border-radius: 0.75rem;
-        height: 3rem;
-        font-weight: 600;
-        font-family: 'Outfit', sans-serif;
-        background: linear-gradient(135deg, #00d4aa 0%, #00b4d8 100%);
-        border: none;
-        color: #0f172a;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 212, 170, 0.4);
-    }
-    
-    .agent-status {
-        font-family: 'JetBrains Mono', monospace;
-        padding: 0.5rem 1rem;
         border-radius: 0.5rem;
-        font-size: 0.85rem;
-    }
-    
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 500;
-        border-radius: 0.5rem 0.5rem 0 0;
+        height: 3rem;
+        font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -138,7 +93,7 @@ if 'last_ticker' not in st.session_state:
 
 # Title
 st.markdown('<h1 class="main-header">🤖 Stock Trading AI Agent</h1>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Powered by Multi-Agent AI System • LangGraph • Alpaca Trading</p>', unsafe_allow_html=True)
+st.markdown("### Powered by Multi-Agent AI System with Alpaca Trading")
 
 # Sidebar
 with st.sidebar:
@@ -168,15 +123,9 @@ with st.sidebar:
             st.error(f"⚠️ Alpaca Error: {str(e)}")
     else:
         st.error("❌ Not connected to Alpaca")
-        st.info("Add your API keys in Streamlit secrets or .env file")
     
     st.markdown("---")
     st.info("📌 **Paper Trading Mode**\nSafe testing environment")
-    
-    st.markdown("---")
-    st.markdown("### 🔗 Resources")
-    st.markdown("- [Alpaca Trading](https://alpaca.markets)")
-    st.markdown("- [LangGraph Docs](https://langchain-ai.github.io/langgraph/)")
 
 # Main content
 tab1, tab2, tab3 = st.tabs(["📊 Stock Analysis", "⚡ Direct Trade", "📈 Market Data"])
@@ -464,38 +413,15 @@ with tab1:
                 
                 recommendation = result['trade_recommendation']
                 
-                # Parse recommendation - look for the actual recommendation pattern
-                # Check first 500 chars for the actual recommendation (not template text)
-                rec_header = recommendation[:500].upper()
-                
-                # Look for specific patterns that indicate the actual recommendation
-                import re
-                
-                # Pattern 1: "Overall Recommendation: X" or "Recommendation: X"
-                rec_match = re.search(r'(?:OVERALL\s+)?RECOMMENDATION[:\s]+(\w+(?:\s+\w+)?)', rec_header)
-                
-                if rec_match:
-                    actual_rec = rec_match.group(1).strip()
-                    if 'STRONG' in actual_rec and 'BUY' in actual_rec:
-                        st.success("🚀 **RECOMMENDATION: STRONG BUY**")
-                    elif 'BUY' in actual_rec and 'STRONG' not in actual_rec:
-                        st.success("✅ **RECOMMENDATION: BUY**")
-                    elif 'SELL' in actual_rec:
-                        st.error("⚠️ **RECOMMENDATION: SELL**")
-                    elif 'HOLD' in actual_rec or 'WAIT' in actual_rec:
-                        st.info("📌 **RECOMMENDATION: HOLD**")
-                    else:
-                        st.info(f"📌 **RECOMMENDATION: {actual_rec}**")
+                # Parse recommendation
+                if 'BUY' in recommendation.upper() and 'STRONG BUY' not in recommendation.upper():
+                    st.success("✅ **RECOMMENDATION: BUY**")
+                elif 'STRONG BUY' in recommendation.upper():
+                    st.success("🚀 **RECOMMENDATION: STRONG BUY**")
+                elif 'SELL' in recommendation.upper():
+                    st.error("⚠️ **RECOMMENDATION: SELL**")
                 else:
-                    # Fallback: check if HOLD appears early (more likely to be the actual rec)
-                    if 'OVERALL RECOMMENDATION: HOLD' in rec_header or rec_header.startswith('HOLD'):
-                        st.info("📌 **RECOMMENDATION: HOLD**")
-                    elif 'OVERALL RECOMMENDATION: BUY' in rec_header:
-                        st.success("✅ **RECOMMENDATION: BUY**")
-                    elif 'OVERALL RECOMMENDATION: SELL' in rec_header:
-                        st.error("⚠️ **RECOMMENDATION: SELL**")
-                    else:
-                        st.info("📌 **RECOMMENDATION: See details below**")
+                    st.info("📌 **RECOMMENDATION: HOLD**")
                 
                 st.text(recommendation)
             else:
@@ -693,16 +619,16 @@ with tab3:
             df['SMA_50'] = df['close'].rolling(window=50).mean()
             
             fig.add_trace(
-                go.Scatter(x=df.index, y=df['SMA_20'], name='SMA 20', line=dict(color='#00d4aa', width=1)),
+                go.Scatter(x=df.index, y=df['SMA_20'], name='SMA 20', line=dict(color='orange', width=1)),
                 row=1, col=1
             )
             fig.add_trace(
-                go.Scatter(x=df.index, y=df['SMA_50'], name='SMA 50', line=dict(color='#00b4d8', width=1)),
+                go.Scatter(x=df.index, y=df['SMA_50'], name='SMA 50', line=dict(color='blue', width=1)),
                 row=1, col=1
             )
             
             # Volume
-            colors = ['#ef4444' if row['close'] < row['open'] else '#10b981' for _, row in df.iterrows()]
+            colors = ['red' if row['close'] < row['open'] else 'green' for _, row in df.iterrows()]
             fig.add_trace(
                 go.Bar(x=df.index, y=df['volume'], name='Volume', marker_color=colors),
                 row=2, col=1
@@ -711,10 +637,7 @@ with tab3:
             fig.update_layout(
                 height=600,
                 xaxis_rangeslider_visible=False,
-                showlegend=True,
-                template='plotly_dark',
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
+                showlegend=True
             )
             
             st.plotly_chart(fig, use_container_width=True)
@@ -739,8 +662,8 @@ with tab3:
 # Footer
 st.markdown("---")
 st.markdown("""
-<div style='text-align: center; color: #64748b; font-family: JetBrains Mono, monospace;'>
-    <p>🤖 Powered by Multi-Agent AI System • 📊 Data from Alpaca Markets • ⚠️ Paper Trading Mode</p>
+<div style='text-align: center; color: #666;'>
+    <p>🤖 Powered by Multi-Agent AI System | 📊 Data from Alpaca Markets | ⚠️ Paper Trading Mode</p>
     <p style='font-size: 0.8rem;'>This is for educational purposes only. Not financial advice.</p>
 </div>
 """, unsafe_allow_html=True)

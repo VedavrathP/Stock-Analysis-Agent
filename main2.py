@@ -27,63 +27,28 @@ from alpaca.data.timeframe import TimeFrame
 from alpaca.data.enums import DataFeed
 import json
 import time
-import streamlit as st
 
 # Load environment variables
 load_dotenv()
 
-def get_env_variable(key: str) -> str:
-    """Get environment variable from .env or Streamlit secrets"""
-    # First try environment variables
-    value = os.getenv(key)
-    if value:
-        return value
-    # Then try Streamlit secrets (for cloud deployment)
-    try:
-        return st.secrets.get(key, "")
-    except:
-        return ""
-
 # Set API keys
-OPENAI_API_KEY = get_env_variable("OPENAI_API_KEY")
-ALPACA_API_KEY = get_env_variable("ALPACA_API_KEY")
-ALPACA_SECRET_KEY = get_env_variable("ALPACA_SECRET_KEY")
-
-if OPENAI_API_KEY:
-    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+ALPACA_API_KEY = os.getenv("ALPACA_API_KEY")
+ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
 
 # Initialize LLM
 from langchain.chat_models import init_chat_model
-
-def get_llm():
-    """Initialize LLM with error handling"""
-    try:
-        return init_chat_model("openai:gpt-4o")
-    except Exception as e:
-        print(f"⚠️ Warning: LLM initialization failed: {e}")
-        return None
-
-llm = get_llm()
+llm = init_chat_model("openai:gpt-4o")
 
 # Initialize Alpaca clients
-def init_alpaca_clients():
-    """Initialize Alpaca clients with error handling"""
+try:
+    trading_client = TradingClient(ALPACA_API_KEY, ALPACA_SECRET_KEY, paper=True)
+    data_client = StockHistoricalDataClient(ALPACA_API_KEY, ALPACA_SECRET_KEY)
+    print("✅ Alpaca clients initialized successfully")
+except Exception as e:
+    print(f"⚠️ Warning: Alpaca client initialization failed: {e}")
     trading_client = None
     data_client = None
-    
-    if ALPACA_API_KEY and ALPACA_SECRET_KEY:
-        try:
-            trading_client = TradingClient(ALPACA_API_KEY, ALPACA_SECRET_KEY, paper=True)
-            data_client = StockHistoricalDataClient(ALPACA_API_KEY, ALPACA_SECRET_KEY)
-            print("✅ Alpaca clients initialized successfully")
-        except Exception as e:
-            print(f"⚠️ Warning: Alpaca client initialization failed: {e}")
-    else:
-        print("⚠️ Warning: Alpaca API keys not found")
-    
-    return trading_client, data_client
-
-trading_client, data_client = init_alpaca_clients()
 
 
 # ===================================
@@ -870,7 +835,7 @@ if __name__ == "__main__":
         mode = sys.argv[1].lower()
         
         if mode == "direct" and len(sys.argv) >= 5:
-            # Direct trade mode: python stock_agent.py direct BUY TSLA 10
+            # Direct trade mode: python main2.py direct BUY TSLA 10
             action = sys.argv[2].upper()
             ticker = sys.argv[3].upper()
             quantity = int(sys.argv[4])
@@ -883,7 +848,7 @@ if __name__ == "__main__":
             response = execute_direct_trade(ticker, action, quantity)
             
         elif mode == "analyze" and len(sys.argv) >= 3:
-            # Analysis mode: python stock_agent.py analyze TSLA
+            # Analysis mode: python main2.py analyze TSLA
             ticker = sys.argv[2].upper()
             
             print(f"📊 MODE: FULL ANALYSIS")
@@ -896,12 +861,12 @@ if __name__ == "__main__":
         else:
             print("❌ Invalid arguments!")
             print("\nUsage:")
-            print("  Full Analysis: python stock_agent.py analyze TICKER")
-            print("  Direct Trade:  python stock_agent.py direct BUY/SELL TICKER QUANTITY")
+            print("  Full Analysis: python main2.py analyze TICKER")
+            print("  Direct Trade:  python main2.py direct BUY/SELL TICKER QUANTITY")
             print("\nExamples:")
-            print("  python stock_agent.py analyze TSLA")
-            print("  python stock_agent.py direct BUY AAPL 5")
-            print("  python stock_agent.py direct SELL MSFT 10")
+            print("  python main2.py analyze TSLA")
+            print("  python main2.py direct BUY AAPL 5")
+            print("  python main2.py direct SELL MSFT 10")
             sys.exit(1)
     else:
         # Default mode: Full analysis
@@ -948,4 +913,3 @@ if __name__ == "__main__":
     print("\n" + "="*60)
     print("✅ Trading Workflow Complete!")
     print("="*60 + "\n")
-
