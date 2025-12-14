@@ -15,7 +15,7 @@
 </div>
 
 ---
-
+Demo Video: https://drive.google.com/file/d/1r6_boZoBL2WCWEKpUcTUM1eecEQi7hTz/view?usp=sharing
 ## 🎯 Overview
 
 This project implements a **supervised multi-agent architecture** for stock trading analysis and execution. It uses specialized AI agents working together to provide comprehensive stock analysis before making trading decisions.
